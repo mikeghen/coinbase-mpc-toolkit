@@ -2,9 +2,10 @@
 This project contains code for a [Langchain Toolkit](https://js.langchain.com/v0.2/docs/concepts/#toolkits) that integrates with [Coinbase's Developer Platform API MPC Wallets](https://docs.cdp.coinbase.com/mpc-wallet/docs/wallets) to allow agents to interact onchain as part of their workflow. 
 
 ## Overview
-* **Tools** ([`./tools`](./tools)) - This directory contains the tools that can be used to interact with the Coinbase MPC Wallets. Tools are extensions of the Langchain `BaseTool`.
-    * `FundWallet`: This tool is used to fund a wallet with a specified amount of ETH.
-    * `TradeAssets`: This tool is used to trade assets on the wallet.
+* **Tools** ([`./tools`](./tools)) - This directory contains the tools that can be used to interact with the Coinbase MPC Wallets. Tools are extensions of the Langchain [`BaseTool`](https://python.langchain.com/v0.2/docs/how_to/custom_tools/#subclass-basetool).
+    * [`FundWallet`](./tools/fund_wallet.py): This tool is used to fund a wallet with a specified amount of ETH.
+    * [`TransferFunds`](./tools/transfer_funds.py): This tool is used to transfer funds from one wallet to another.
+    * [`TradeAssets`](./tools/trade_assets.py): This tool is used to trade assets on the wallet.
 * **Coinbase Developer Platform API** ([`./cdp`](./cdp)) - This is a simple API I made that exposes the `@coinbase/mpc-wallet-sdk` as API endpoints since there is no Python SDK yet. 
 
 ## Testing Tools
