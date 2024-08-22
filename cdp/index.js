@@ -1,5 +1,7 @@
 const express = require('express');
 const { Coinbase } = require('@coinbase/coinbase-sdk');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(express.json());
@@ -17,12 +19,37 @@ let coinbase;
     }
 })();
 
+// Utility function to get the file path for a wallet seed
+const getWalletSeedPath = (walletId) => {
+    return path.join(__dirname, 'wallet_seeds', `${walletId}.json`);
+};
+
+// Utility function to rehydrate a wallet
+const rehydrateWallet = async (user, walletId) => {
+    const wallet = await user.getWallet(walletId);
+    const filePath = getWalletSeedPath(walletId);
+    await wallet.loadSeed(filePath);
+    return wallet;
+};
+
 // Create a Wallet
 app.post('/create-wallet', async (req, res) => {
     try {
         const user = await coinbase.getDefaultUser();
         const wallet = await user.createWallet();
-        res.json({ message: 'Wallet created successfully', wallet });
+
+        // Save the wallet seed
+        const filePath = getWalletSeedPath(wallet.getId());
+
+        // Create the directory if it doesn't exist
+        const directoryPath = path.dirname(filePath);
+        if (!fs.existsSync(directoryPath)) {
+            fs.mkdirSync(directoryPath, { recursive: true });
+        }
+
+        await wallet.saveSeed(filePath, true); // true for encryption
+
+        res.json({ message: 'Wallet created and seed saved successfully', walletId: wallet.getId() });
     } catch (error) {
         console.error('Error creating wallet:', error);
         res.status(500).json({ error: error.message });
@@ -36,8 +63,12 @@ app.post('/fund-wallet', async (req, res) => {
         console.log('walletId:', walletId);
         let user = await coinbase.getDefaultUser();
         console.log('user:', user);
-        const wallet = await user.getWallet(walletId);
+        
+        // Rehydrate the wallet
+        const wallet = await rehydrateWallet(user, walletId);
         console.log('wallet:', wallet);
+        console.log(`wallet is hydrated: ${wallet.canSign()}`);
+
         const faucetTransaction = await wallet.faucet();
         console.log('faucetTransaction:', faucetTransaction);
         res.json({ message: 'Faucet transaction completed', transaction: faucetTransaction });
@@ -52,8 +83,11 @@ app.post('/transfer-funds', async (req, res) => {
     try {
         const { sourceWalletId, destinationWalletAddress, amount } = req.body;
         let user = await coinbase.getDefaultUser();
-        const sourceWallet = await user.getWallet(sourceWalletId);
+        
+        // Rehydrate the wallet
+        const sourceWallet = await rehydrateWallet(user, sourceWalletId);
         console.log(`wallet is hydrated: ${sourceWallet.canSign()}`);
+
         const transfer = await sourceWallet.createTransfer({
             amount,
             assetId: Coinbase.assets.Eth,
@@ -71,7 +105,11 @@ app.post('/trade-assets', async (req, res) => {
     try {
         const { walletId, fromAssetId, toAssetId, amount } = req.body;
         const user = await coinbase.getDefaultUser();
-        const wallet = await user.getWallet(walletId);
+        
+        // Rehydrate the wallet
+        const wallet = await rehydrateWallet(user, walletId);
+        console.log(`wallet is hydrated: ${wallet.canSign()}`);
+
         const trade = await wallet.createTrade({ 
             amount, 
             fromAssetId, 
