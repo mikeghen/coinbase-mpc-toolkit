@@ -33,6 +33,7 @@ class TradeAssetsTool(BaseTool):
         except Exception as e:
             return f"Trade failed: {str(e)}"
 
+# Only works on mainnet
 ## Usage example:
 # if __name__ == "__main__":
 #     tool = TradeAssetsTool()
