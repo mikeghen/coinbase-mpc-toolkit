@@ -2,7 +2,7 @@ from typing import Optional, Type
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from coinbase_api import CoinbaseAPIWrapper  # Import our API wrapper
+from tools.coinbase_api import CoinbaseAPIWrapper  # Import our API wrapper
 
 class TransferFundsInput(BaseModel):
     destination_wallet_address: str = Field(description="The wallet address to which ETH will be sent")
@@ -26,7 +26,6 @@ class TransferFundsTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         try:
-            amount = int(float(amount) * 1e18)
             result = self.api.transfer_funds(self.api.default_wallet_id, destination_wallet_address, amount)
             return f"Transfer successful: {result}"
         except Exception as e:

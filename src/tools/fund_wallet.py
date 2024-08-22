@@ -2,15 +2,12 @@ from typing import Optional, Type
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from coinbase_api import CoinbaseAPIWrapper, DEFAULT_WALLET_ID  
+from tools.coinbase_api import CoinbaseAPIWrapper, DEFAULT_WALLET_ID  
 
-class FundWalletInput(BaseModel):
-    wallet_id: str = Field(description="The ID of the wallet to fund with testnet ETH")
 
 class FundWalletTool(BaseTool):
     name = "FundWallet"
     description = "Fund a wallet with testnet ETH"
-    args_schema: Type[BaseModel] = FundWalletInput
     return_direct: bool = True
     api: CoinbaseAPIWrapper = None
 
@@ -20,11 +17,10 @@ class FundWalletTool(BaseTool):
 
     def _run(
         self,
-        wallet_id: str,
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         try:
-            result = self.api.fund_wallet(wallet_id)
+            result = self.api.fund_wallet(DEFAULT_WALLET_ID)
             return f"Wallet funded successfully: {result}"
         except Exception as e:
             return f"Funding failed: {str(e)}"
@@ -32,5 +28,5 @@ class FundWalletTool(BaseTool):
 # Usage example:
 if __name__ == "__main__":
     tool = FundWalletTool()
-    result = tool._run(wallet_id=DEFAULT_WALLET_ID)
+    result = tool._run()
     print(result)
