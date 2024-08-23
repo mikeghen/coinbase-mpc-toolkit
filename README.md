@@ -49,11 +49,18 @@ Coinbase SDK initialized successfully
 ```bash
 cd src
 pip install -r requirements.txt
-python main.py
+python server.py
 ```
-An example response can be found above
+3. In a third terminal, run the app
+```bash
+cd app
+npm install
+npm run dev
+```
+4. Open your browser and navigate to `http://localhost:8080` to see the app in action.
 
 # Future Work
+* **Honey Pot Demo**: Create a demo where users try to convince the agent to transfer more than the allowed limit.
 * **Integration with Slack**: Integrate the toolkit with Slack to allow users to interact with the agent through Slack. Avoid having to make/maintain a frontend.
-1. **Save and Reference Chat History**: Save the chat history and reference it in the demo conversations.
-1. **Add more tools**: Add more tools to interact with the blockchain for read purposes (e.g. balance, balanceOf, etc).
+* **Save and Reference Chat History**: Save the chat history and reference it in the demo conversations.
+* **Add more tools**: Add more tools to interact with the blockchain for read purposes (e.g. balance, balanceOf, etc).
