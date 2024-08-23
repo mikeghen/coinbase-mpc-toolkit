@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 import logging
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import AIMessage
 from tools.fund_wallet import FundWalletTool
 from tools.transfer_funds import TransferFundsTool
 from tools.get_balance import GetEthBalanceTool
@@ -109,11 +110,15 @@ def query_agent():
         save_message(user_id, 'human', user_message)
         messages.append(("human", user_message))
         
-        # Pass the conversation history to the agent
-        response = agent.invoke({"messages": messages})
-        
-        # Get the agent's response content
-        agent_response = response["messages"][-1].content
+        # Pass the conversation history to the agent and log the intermediate steps
+        for step in agent.stream({"messages": messages}, stream_mode="updates"):
+            if "agent" in step:
+                logging.info(f"Agent message: {step['agent']['messages']}")
+            elif "tools" in step:
+                logging.info(f"Tool message: {step['tools']['messages']}")
+
+        # Get the agent's final response content
+        agent_response = step["agent"]["messages"][-1].content
         
         # Save the agent's response to the database
         save_message(user_id, 'system', agent_response)
@@ -121,6 +126,10 @@ def query_agent():
 
         # Return the response as JSON
         return jsonify(agent_response), 200
+
+    except Exception as e:
+        logging.error(f"Error processing request: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
     except Exception as e:
         logging.error(f"Error processing request: {str(e)}")
