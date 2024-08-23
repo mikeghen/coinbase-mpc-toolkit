@@ -9,7 +9,7 @@ from tools.transfer_funds import TransferFundsTool
 load_dotenv()
 
 # Initialize the LLM with the OpenAI API key from the environment
-llm = ChatOpenAI(model="gpt-4", api_key=os.getenv("OPENAI_API_KEY"))
+llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize the tools from the provided files
 fund_wallet_tool = FundWalletTool()
