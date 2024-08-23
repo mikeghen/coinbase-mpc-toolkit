@@ -4,7 +4,7 @@ import requests
 DEFAULT_WALLET_ID = '674069f0-3de9-40bf-a06b-22a9573c7861'
 
 class CoinbaseAPIWrapper:
-    def __init__(self, base_url="http://localhost:3000"):
+    def __init__(self, base_url="http://cdp:3000"):
         self.base_url = base_url
         self.default_wallet_id = DEFAULT_WALLET_ID
 

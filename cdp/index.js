@@ -11,7 +11,7 @@ let coinbase;
 (async () => {
     try {
         coinbase = await Coinbase.configureFromJson({ 
-            filePath: '~/Downloads/cdp_api_key.json' // Update with your API key file path
+            filePath: './secrets/cdp_api_key.json' // Update with your API key file path
         });
         console.log('Coinbase SDK initialized successfully');
     } catch (error) {
@@ -118,6 +118,25 @@ app.post('/trade-assets', async (req, res) => {
         res.json({ message: 'Trade completed successfully', trade });
     } catch (error) {
         console.error('Error trading assets:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get ETH Balance
+app.get('/wallet-balance/:walletId', async (req, res) => {
+    try {
+        const { walletId } = req.params;
+        let user = await coinbase.getDefaultUser();
+
+        // Rehydrate the wallet
+        const wallet = await rehydrateWallet(user, walletId);
+
+        // Get the balance of ETH
+        const balance = await wallet.getBalance(Coinbase.assets.Eth);
+
+        res.json({ message: 'ETH balance retrieved successfully', balance });
+    } catch (error) {
+        console.error('Error retrieving wallet balance:', error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -4,5 +4,7 @@ langchain-core==0.2.15
 langchain-openai==0.1.7
 langgraph
 Flask
+Flask-Migrate
 Flask-CORS
 python-dotenv
+psycopg2-binary
