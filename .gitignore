@@ -4,3 +4,4 @@ venv
 .env
 __pycache__
 wallet_seeds
+chat_history.db

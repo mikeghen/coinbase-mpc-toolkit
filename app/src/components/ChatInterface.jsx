@@ -1,18 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [userId, setUserId] = useState('');
   const scrollAreaRef = useRef(null);
   const queryClient = useQueryClient();
 
+  const generateUserId = () => {
+    return crypto.randomUUID();
+  };
+
+  useEffect(() => {
+    // Generate and set a new userId when the component mounts
+    const newUserId = generateUserId();
+    setUserId(newUserId);
+  }, []);
+
   const sendMessage = async (message) => {
-    const response = await axios.post('https://localhost:5000/query-agent', { message });
+    const response = await axios.post('http://localhost:5000/query-agent', { message, user_id: userId });
     return response.data;
   };
 
@@ -56,7 +68,7 @@ const ChatInterface = () => {
                     : 'bg-white text-black'
                 }`}
               >
-                {message.text}
+                <ReactMarkdown>{message.text}</ReactMarkdown>
               </div>
             </div>
           ))}
@@ -69,7 +81,7 @@ const ChatInterface = () => {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="iMessage"
+            placeholder="Type a message..."
             className="flex-1 mr-2 rounded-full"
           />
           <Button onClick={handleSendMessage} className="rounded-full">Send</Button>

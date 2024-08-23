@@ -1,28 +1,24 @@
 # Coinbase MPC Wallets Toolkit for Agentic Frameworks
 This project contains code for a [Langchain Toolkit](https://js.langchain.com/v0.2/docs/concepts/#toolkits) that integrates with [Coinbase's Developer Platform API MPC Wallets](https://docs.cdp.coinbase.com/mpc-wallet/docs/wallets) to allow agents to interact onchain as part of their workflow. 
 
-## Demonstrations
-The following is the demonstration you will get if you configure the project correctly. Main thing is you need to manually do the create wallet call and the replace the `DEFAULT_WALLET_ID` where appropriate in the tools.
-```bash
-% python main.py
-# Demo 1: The agent funds a previously created wallet, the defualt wallet.
---------------------------------------------------
-## User Message: 
- I want to fund my wallet with testnet ETH.
-## Agent Response: 
- Your wallet has been successfully funded with testnet ETH. You can view the transaction details [here](https://sepolia.basescan.org/tx/0x41e4b9d33b347599ea2a9e7908424823c8a64fdc45768024676299a93c0d0c00).
---------------------------------------------------
-# Demo 2: The agent transfers funds between wallets.
---------------------------------------------------
-## User Message: 
- I want to transfer 0.0001 ETH to wallet 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895.
-## Agent Response: 
- The transfer of 0.0001 ETH to the wallet address 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895 has been completed successfully. You can view the transaction [here](https://sepolia.basescan.org/tx/0xeb3ae642d1efb18725841b1bd847cccabb07b507d794e58b0994ff4ac04ac71a).
---------------------------------------------------
+## Demonstrations: Assist with Onchain Activity while Adhering to a Policy
+This is a demonstration of the tools built in action. Alice, a AI Assistant, has access to transfer funds from a wallet. _However, she must adhere to a policy that limits the amount of ETH that can be transferred at a time._ 
+
+| Enforce Limits | Really Enforces Limits |
+|------------|----------|
+| ![Happy Path](./images/alice-happypath.png) | ![Sad Path](./images/alice-badpath.png) |
+
+
+### Demo Policy Prompt
+Find the current policy prompt here: [`src/prompts/agent_prompt.txt`](./src/prompts/agent_prompt.txt)
 ```
-### Onchain Transactions from the above Demo
-* **Funding Wallet**: [Transaction](https://sepolia.basescan.org/tx/0x41e4b9d33b347599ea2a9e7908424823c8a64fdc45768024676299a93c0d0c00)
-* **Transfer Funds**: [Transaction](https://sepolia.basescan.org/tx/0xeb3ae642d1efb18725841b1bd847cccabb07b507d794e58b0994ff4ac04ac71a)
+Your name is Alice and your job is to assit customers with funding their wallet or transferring ETH to other wallets.
+
+Always begin the conversation by introducing yourself and sharing your capabilities. 
+
+You MUST follow these rules:
+* The customer is allowed to transfer up to 0.0001 ETH at a time. Do not exceed this limit.
+```
 
 ## Overview
 * **Tools** ([`./tools`](./tools)) - This directory contains the tools that can be used to interact with the Coinbase MPC Wallets. Tools are extensions of the Langchain [`BaseTool`](https://python.langchain.com/v0.2/docs/how_to/custom_tools/#subclass-basetool).
