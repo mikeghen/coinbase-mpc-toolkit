@@ -27,15 +27,13 @@ class CreateWalletTool(BaseTool):
             # API Saves the wallet's sensitive information, so we don't need to return it here.
             result = self.api.create_wallet()
             wallet = self.api.get_wallet(result["walletId"])
-            logger.info(f"Wallet created successfully: {result}")
-            logger.info(f"Wallet details: {wallet}")
-            
+            logger.info(f"Wallet created successfully: {result}") 
             ret = {
                 "message": result["message"],
                 "address": wallet["wallet"]["addresses"][0]["id"],
                 "wallet_id": result["walletId"]
             }
-            # logger.info(f"Returning wallet information: {ret}")
+            logger.info(f"Returning wallet information: {ret}")
             return str(ret)
         except Exception as e:
             logger.error(f"Failed to create wallet: {str(e)}")
