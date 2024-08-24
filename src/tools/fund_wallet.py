@@ -2,8 +2,11 @@ from typing import Optional, Type
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from tools.coinbase_api import CoinbaseAPIWrapper, DEFAULT_WALLET_ID  
+from tools.coinbase_api import CoinbaseAPIWrapper, DEFAULT_WALLET_ID
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class FundWalletInput(BaseModel):
     wallet_id: str = Field(description="The wallet ID to fund with testnet ETH")
@@ -26,13 +29,16 @@ class FundWalletTool(BaseTool):
         **kwargs  # Absorbs any unexpected keyword arguments
     ) -> str:
         try:
+            logger.info(f"Funding wallet with ID: {wallet_id}")
             result = self.api.fund_wallet(wallet_id)
-            return f"Wallet funded successfully: {result}"
+            logger.info(f"Wallet funded successfully: {result}")
+            return str(result)
         except Exception as e:
+            logger.error(f"Funding failed for wallet ID {wallet_id}: {str(e)}")
             return f"Funding failed: {str(e)}"
 
 # Usage example:
 if __name__ == "__main__":
     tool = FundWalletTool()
-    result = tool._run()
+    result = tool._run(wallet_id=DEFAULT_WALLET_ID)
     print(result)
