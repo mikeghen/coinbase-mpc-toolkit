@@ -1,14 +1,15 @@
-from typing import Optional, Type
-from web3 import Web3, Account
-from langchain.pydantic_v1 import BaseModel, Field
+from typing import Optional, Type, Dict, Any
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
 from tools.coinbase_api import CoinbaseAPIWrapper
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class CreateWalletTool(BaseTool):
     name = "CreateWallet"
-    description = "Generate a new Ethereum wallet and return the address and private key"
+    description = "Generate a new Ethereum wallet and return the address and wallet ID"
     return_direct: bool = True
     api: CoinbaseAPIWrapper = None
 
@@ -22,10 +23,22 @@ class CreateWalletTool(BaseTool):
         **kwargs  # Absorbs any unexpected keyword arguments
     ) -> dict:
         try:
+            logger.info("Creating a new Ethereum wallet...")
+            # API Saves the wallet's sensitive information, so we don't need to return it here.
             result = self.api.create_wallet()
             wallet = self.api.get_wallet(result["walletId"])
-            return f"Wallet: {wallet}"
+            logger.info(f"Wallet created successfully: {result}")
+            logger.info(f"Wallet details: {wallet}")
+            
+            ret = {
+                "message": result["message"],
+                "address": wallet["wallet"]["addresses"][0]["id"],
+                "wallet_id": result["walletId"]
+            }
+            # logger.info(f"Returning wallet information: {ret}")
+            return str(ret)
         except Exception as e:
+            logger.error(f"Failed to create wallet: {str(e)}")
             return {"error": f"Failed to create wallet: {str(e)}"}
 
 # Usage example:
