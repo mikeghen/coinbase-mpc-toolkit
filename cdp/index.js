@@ -141,6 +141,19 @@ app.get('/wallet-balance/:walletId', async (req, res) => {
     }
 });
 
+// Get a Wallet
+app.get('/get-wallet/:walletId', async (req, res) => {
+    try {
+        const { walletId } = req.params;
+        let user = await coinbase.getDefaultUser();
+        const wallet = await user.getWallet(walletId);
+        res.json({ message: 'Wallet retrieved successfully', wallet });
+    } catch (error) {
+        console.error('Error retrieving wallet:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Function to start the server
 const startServer = () => {
     const PORT = process.env.PORT || 3000;

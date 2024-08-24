@@ -5,6 +5,7 @@ from langchain_core.tools import BaseTool
 from tools.coinbase_api import CoinbaseAPIWrapper  # Import our API wrapper
 
 class TransferFundsInput(BaseModel):
+    source_wallet_id: str = Field(description="The wallet ID from which ETH will be sent")
     destination_wallet_address: str = Field(description="The wallet address to which ETH will be sent")
     amount: str = Field(description="The amount of ETH to send (as a string, e.g., '0.1')")
 
@@ -21,12 +22,14 @@ class TransferFundsTool(BaseTool):
 
     def _run(
         self, 
+        source_wallet_id: str,
         destination_wallet_address: str, 
         amount: str, 
-        run_manager: Optional[CallbackManagerForToolRun] = None
+        run_manager: Optional[CallbackManagerForToolRun] = None,
+        **kwargs  # Absorbs any unexpected keyword arguments
     ) -> str:
         try:
-            result = self.api.transfer_funds(self.api.default_wallet_id, destination_wallet_address, amount)
+            result = self.api.transfer_funds(source_wallet_id, destination_wallet_address, amount)
             # Optimization: The result has a lot of junk in it that doesn't need to be shown as an output
             return f"Transfer successful: {result}"
         except Exception as e:

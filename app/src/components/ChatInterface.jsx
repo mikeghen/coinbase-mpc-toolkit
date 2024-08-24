@@ -14,13 +14,21 @@ const ChatInterface = () => {
   const queryClient = useQueryClient();
 
   const generateUserId = () => {
-    return crypto.randomUUID();
+    const timestamp = Date.now().toString(36); // Convert current timestamp to base-36
+    const randomNum = Math.random().toString(36).substring(2, 10); // Generate a random string
+    return `${timestamp}-${randomNum}`; // Combine both parts
   };
 
   useEffect(() => {
     // Generate and set a new userId when the component mounts
     const newUserId = generateUserId();
     setUserId(newUserId);
+
+    // // Automatically send the initial user message and get the system's response
+    // const initialMessage = "Create a wallet for me to use.";
+    // setMessages(prev => [...prev, { text: initialMessage, isUser: true }]);
+    // mutation.mutate(initialMessage);
+
   }, []);
 
   const sendMessage = async (message) => {

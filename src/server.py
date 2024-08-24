@@ -8,9 +8,10 @@ import logging
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
+from tools.create_wallet import CreateWalletTool
 from tools.fund_wallet import FundWalletTool
 from tools.transfer_funds import TransferFundsTool
-from tools.get_balance import GetEthBalanceTool
+from tools.get_balance import GetWalletBalanceTool
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -41,15 +42,16 @@ class ChatHistory(db.Model):
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 # Initialize the LLM with the OpenAI API key from the environment
-llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=1, api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize the tools from the provided files
+create_wallet_tool = CreateWalletTool()
 fund_wallet_tool = FundWalletTool()
 transfer_funds_tool = TransferFundsTool()
-get_balance_tool = GetEthBalanceTool()
+get_balance_tool = GetWalletBalanceTool(web3_provider_url=os.getenv("WEB3_PROVIDER_URL"))
 
 # List of tools to be used by the agent
-tools = [fund_wallet_tool, transfer_funds_tool, get_balance_tool]
+tools = [fund_wallet_tool, transfer_funds_tool, get_balance_tool, create_wallet_tool]
 
 # Create the ReAct agent using the LangGraph create_react_agent method
 agent = create_react_agent(llm, tools)
@@ -78,7 +80,7 @@ def load_conversation(user_id):
 # Function to load the system message
 def load_system_message():
     try:
-        with open('./prompts/agent_prompt.txt', 'r') as file:
+        with open('./prompts/malice_prompt.txt', 'r') as file:
             system_message = file.read().strip()
             logging.debug("Loaded system message.")
             return system_message

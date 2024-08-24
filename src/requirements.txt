@@ -8,3 +8,4 @@ Flask-Migrate
 Flask-CORS
 python-dotenv
 psycopg2-binary
+web3

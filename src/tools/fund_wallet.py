@@ -5,9 +5,13 @@ from langchain_core.tools import BaseTool
 from tools.coinbase_api import CoinbaseAPIWrapper, DEFAULT_WALLET_ID  
 
 
+class FundWalletInput(BaseModel):
+    wallet_id: str = Field(description="The wallet ID to fund with testnet ETH")
+
 class FundWalletTool(BaseTool):
     name = "FundWallet"
     description = "Fund a wallet with testnet ETH"
+    args_schema: Type[BaseModel] = FundWalletInput
     return_direct: bool = True
     api: CoinbaseAPIWrapper = None
 
@@ -17,10 +21,12 @@ class FundWalletTool(BaseTool):
 
     def _run(
         self,
-        run_manager: Optional[CallbackManagerForToolRun] = None
+        wallet_id: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
+        **kwargs  # Absorbs any unexpected keyword arguments
     ) -> str:
         try:
-            result = self.api.fund_wallet(DEFAULT_WALLET_ID)
+            result = self.api.fund_wallet(wallet_id)
             return f"Wallet funded successfully: {result}"
         except Exception as e:
             return f"Funding failed: {str(e)}"

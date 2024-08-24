@@ -7,11 +7,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    volumes:
+      - ./app:/app
+      - /app/node_modules
     depends_on:
       - cdp
       - flask-app
     environment:
-      - NODE_ENV=developement
+      - NODE_ENV=development
 
   cdp:
     build:
@@ -19,6 +22,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=developement
 
@@ -28,10 +34,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    volumes:
+      - ./src:/app
     depends_on:
       - db
     environment:
-      - FLASK_ENV=developement
+      - COINBASE_API_URL=http://cdp:3000
+      - FLASK_ENV=development
       - FLASK_DEBUG=true
       - FLASK_APP=server.py
       - DB_NAME=chatbot
@@ -39,6 +48,7 @@ services:
       - DB_PASSWORD=postgres
       - DB_HOST=db
       - DB_PORT=5432
+    command: flask run --host=0.0.0.0 --port=5000
 
   db:
     image: postgres:13

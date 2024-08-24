@@ -24,7 +24,8 @@ class TradeAssetsTool(BaseTool):
         amount: str,
         asset_from: str,
         asset_to: str,
-        run_manager: Optional[CallbackManagerForToolRun] = None
+        run_manager: Optional[CallbackManagerForToolRun] = None,
+        **kwargs  # Absorbs any unexpected keyword arguments
     ) -> str:
         try:
             amount = int(float(amount) * 1e18)
