@@ -32,7 +32,7 @@ const ChatInterface = () => {
   }, []);
 
   const sendMessage = async (message) => {
-    const response = await axios.post('http://localhost:5000/query-agent', { message, user_id: userId });
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/query-agent`, { message, user_id: userId });
     return response.data;
   };
 
