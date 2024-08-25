@@ -1,11 +1,27 @@
-langchain==0.2.6
-langchain-community==0.2.6
-langchain-core==0.2.15
-langchain-openai==0.1.7
+# Core LangChain packages
+langchain
+langchain-community
+langchain-core
+langchain-openai
 langgraph
+
+# Flask and related packages
 Flask
 Flask-Migrate
 Flask-CORS
-python-dotenv
+Flask-SQLAlchemy
+
+# Database and ORM
+psycopg
+psycopg-pool
 psycopg2-binary
+
+
+# LangGraph persistence
+langgraph-checkpoint-postgres
+
+# Blockchain interaction
 web3
+
+# Environment variables
+python-dotenv

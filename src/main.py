@@ -41,21 +41,21 @@ agent = create_react_agent(llm, tools)
 # print("## Agent Response: \n", response["messages"][-1].content)
 # print("-"*50)
 
-# # Example 2: Transfer funds
-# user_message = "I want to transfer 0.0001 ETH to wallet 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895."
-# response = agent.invoke(
-#     {
-#         "messages": [
-#             ("system", "{\"message\": \"Wallet retrieved successfully\", \"address\": \"0xE9B0f8a530736313fdD388B0660163e93b298c77\",\"wallet_id\": \"674069f0-3de9-40bf-a06b-22a9573c7861\"}"),
-#             ("human", user_message)
-#         ]
-#     }
-# )
-# print("# Demo 2: The agent transfers funds between wallets.")
-# print("-"*50)
-# print("## User Message: \n", user_message)
-# print("## Agent Response: \n", response["messages"][-1].content)
-# print("-"*50) 
+# Example 2: Transfer funds
+user_message = "I want to transfer 0.0001 ETH to wallet 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895."
+response = agent.invoke(
+    {
+        "messages": [
+            ("system", "{\"message\": \"Wallet retrieved successfully\", \"address\": \"0xE9B0f8a530736313fdD388B0660163e93b298c77\",\"wallet_id\": \"674069f0-3de9-40bf-a06b-22a9573c7861\"}"),
+            ("human", user_message)
+        ]
+    }
+)
+print("# Demo 2: The agent transfers funds between wallets.")
+print("-"*50)
+print("## User Message: \n", user_message)
+print("## Agent Response: \n", response["messages"][-1].content)
+print("-"*50) 
 
 
 # # Example 3: Get wallet balance
@@ -81,16 +81,16 @@ agent = create_react_agent(llm, tools)
 
 # Start a new conversation with the agent, set the system messages to be the response from the last tool calls
 # Load the file in prompts/malice_prompt.txt
-with open("prompts/malice_prompt.txt", "r") as file:
-    system_prompt = file.read()
-response = agent.invoke(
-    {
-        "messages": [
-            ("system", system_prompt),
-            ("system", wallet_creation_response),
-            ("system", fund_wallet_response),
-            ("human", "Hi")
-        ]
-    }
-)
-print("Agent response:", response["messages"][-1].content)
+# with open("prompts/malice_prompt.txt", "r") as file:
+#     system_prompt = file.read()
+# response = agent.invoke(
+#     {
+#         "messages": [
+#             ("system", system_prompt),
+#             ("system", wallet_creation_response),
+#             ("system", fund_wallet_response),
+#             ("human", "Hi")
+#         ]
+#     }
+# )
+# print("Agent response:", response["messages"][-1].content)

@@ -8,10 +8,13 @@ import logging
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
+from langgraph.checkpoint.postgres import PostgresSaver
 from tools.create_wallet import CreateWalletTool
 from tools.fund_wallet import FundWalletTool
 from tools.transfer_funds import TransferFundsTool
 from tools.get_balance import GetWalletBalanceTool
+import json
+from sqlalchemy import text
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -33,12 +36,12 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
                     handlers=[logging.StreamHandler()])
 
-# Example model definition
-class ChatHistory(db.Model):
+# Model definition for user wallet information
+class UserWallet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(255), nullable=False)
-    message = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.String(255), nullable=False, unique=True)
+    wallet_id = db.Column(db.String(255), nullable=False)
+    wallet_address = db.Column(db.String(255), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 # Initialize the LLM with the OpenAI API key from the environment
@@ -51,7 +54,6 @@ transfer_funds_tool = TransferFundsTool()
 get_balance_tool = GetWalletBalanceTool(web3_provider_url=os.getenv("WEB3_PROVIDER_URL"))
 
 # List of tools to be used by the agent
-# Funding and creating wallets are disabled for malice version
 tools = [
     fund_wallet_tool, 
     transfer_funds_tool, 
@@ -59,29 +61,16 @@ tools = [
     create_wallet_tool
 ]
 
-# Create the ReAct agent using the LangGraph create_react_agent method
-agent = create_react_agent(llm, tools)
-
-# Save a message to the database
-def save_message(user_id, role, message):
+# Save wallet information to the database
+def save_wallet_info(user_id, wallet_id, wallet_address):
     try:
-        new_message = ChatHistory(user_id=user_id, role=role, message=message)
-        db.session.add(new_message)
+        new_wallet = UserWallet(user_id=user_id, wallet_id=wallet_id, wallet_address=wallet_address)
+        db.session.add(new_wallet)
         db.session.commit()
-        logging.debug(f"Saved message to database: user_id={user_id}, role={role}, message={message}")
+        logging.debug(f"Saved wallet info to database: user_id={user_id}, wallet_id={wallet_id}, wallet_address={wallet_address}")
     except Exception as e:
-        logging.error(f"Failed to save message: {str(e)}")
+        logging.error(f"Failed to save wallet info: {str(e)}")
         db.session.rollback()
-
-# Load existing messages for a user
-def load_conversation(user_id):
-    try:
-        messages = ChatHistory.query.filter_by(user_id=user_id).order_by(ChatHistory.timestamp.asc()).all()
-        logging.debug(f"Loaded conversation for user_id={user_id}")
-        return [(message.role, message.message) for message in messages]
-    except Exception as e:
-        logging.error(f"Failed to load conversation for user_id={user_id}: {str(e)}")
-        return []
 
 # Function to load the system message
 def load_system_message():
@@ -93,15 +82,30 @@ def load_system_message():
     except Exception as e:
         logging.error(f"Failed to load system message: {str(e)}")
         return ""
-    
-def setup_wallet():
+
+def get_existing_wallet(user_id):
+    wallet = UserWallet.query.filter_by(user_id=user_id).first()
+    return wallet
+
+def setup_wallet(user_id):
     try:
-        # Create a new wallet
+        existing_wallet = get_existing_wallet(user_id)
+        if existing_wallet:
+            return json.dumps({"wallet_id": existing_wallet.wallet_id, "address": existing_wallet.wallet_address}), False
+
+        # Create a new wallet if no existing wallet
         create_wallet_response = create_wallet_tool._run()
-        logging.info(f"Created new wallet with ID: {create_wallet_response}")
-        return create_wallet_response
+        wallet_info = json.loads(create_wallet_response)
+        wallet_id = wallet_info['wallet_id']
+        wallet_address = wallet_info['address']
+        
+        # Save wallet information to the database
+        save_wallet_info(user_id, wallet_id, wallet_address)
+        
+        logging.info(f"Created and saved new wallet for user_id: {user_id}, wallet_id: {wallet_id}, address: {wallet_address}")
+        return create_wallet_response, True
     except Exception as e:
-        logging.error(f"Failed to create and fund wallet: {str(e)}")
+        logging.error(f"Failed to create and save wallet: {str(e)}")
         return None
 
 @app.route('/query-agent', methods=['POST'])
@@ -112,45 +116,44 @@ def query_agent():
         user_id = data.get('user_id')
         user_message = data.get('message')
         logging.info(f"Received request: user_id={user_id}, message={user_message}")
+        config = {"configurable": {"thread_id": user_id}}
 
-        # Load existing conversation or start a new one
-        conversation = load_conversation(user_id)
-        
-        if not conversation:
-            # If no conversation exists, start with the system message
-            wallet_message = setup_wallet()
+        # Create the ReAct agent using the LangGraph create_react_agent method
+        with PostgresSaver.from_conn_string(app.config['SQLALCHEMY_DATABASE_URI']) as checkpointer:
+            checkpointer.setup()
+            agent = create_react_agent(llm, tools, checkpointer=checkpointer)
+
+            # Always begin/continue a conversation with system message and wallet informations
+            wallet_message, is_new_wallet = setup_wallet(user_id)
             system_message = load_system_message()
             logging.info(f"Loaded system message: {system_message}")
-            save_message(user_id, 'system', system_message)
-            messages = [
-                ("system", system_message),
-                ("system", wallet_message)
-            ]
+            if is_new_wallet:
+                messages = [
+                    ("system", system_message),
+                    ("system", str(wallet_message)),
+                    ("human", user_message)
+                ]
+            else:
+                messages = [
+                    ("system",str(wallet_message)),
+                    ("human", user_message)
+                ]
             logging.info(f"Starting new conversation for user_id={user_id}")
-        else:
-            # Load existing conversation messages
-            messages = conversation
         
-        # Append the user's new message to the conversation
-        save_message(user_id, 'human', user_message)
-        messages.append(("human", user_message))
-        
-        # Pass the conversation history to the agent and log the intermediate steps
-        for step in agent.stream({"messages": messages}, stream_mode="updates"):
-            if "agent" in step:
-                logging.info(f"Agent message: {step['agent']['messages']}")
-            elif "tools" in step:
-                logging.info(f"Tool message: {step['tools']['messages']}")
+            # Pass the conversation history to the agent and log the intermediate steps
+            for step in agent.stream({"messages": messages}, stream_mode="updates", config=config):
+                if "agent" in step:
+                    logging.info(f"Agent message: {step['agent']['messages']}")
+                elif "tools" in step:
+                    logging.info(f"Tool message: {step['tools']['messages']}")
 
-        # Get the agent's final response content
-        agent_response = step["agent"]["messages"][-1].content
-        
-        # Save the agent's response to the database
-        save_message(user_id, 'system', agent_response)
-        logging.info(f"Agent response for user_id={user_id}: {agent_response}")
+            # Get the agent's final response content
+            agent_response = step["agent"]["messages"][-1].content
+            
+            logging.info(f"Agent response for user_id={user_id}: {agent_response}")
 
-        # Return the response as JSON
-        return jsonify(agent_response), 200
+            # Return the response as JSON
+            return jsonify(agent_response), 200
 
     except Exception as e:
         logging.error(f"Error processing request: {str(e)}")

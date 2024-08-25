@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@coinbase/coinbase-sdk": "^0.0.16",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "winston": "^3.14.2"
   },
   "devDependencies": {
     "chai": "^5.1.1",

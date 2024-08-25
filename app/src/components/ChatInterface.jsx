@@ -79,8 +79,8 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-200">
-      <div className="bg-yellow-500 text-white text-center p-1">
-        Do not talk to Malice
+      <div className="bg-yellow-500 text-white p-4">
+        This demonstration is for research purposes only. Only send <strong>Base Sepolia ETH</strong> to the wallet you are given.
       </div>
       <div className="flex-1 overflow-hidden p-4">
         <ScrollArea className="h-full pr-4 overflow-auto" ref={scrollAreaRef}>

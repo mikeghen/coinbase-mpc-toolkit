@@ -2,9 +2,25 @@ const express = require('express');
 const { Coinbase } = require('@coinbase/coinbase-sdk');
 const path = require('path');
 const fs = require('fs');
+const winston = require('winston');
 
 const app = express();
 app.use(express.json());
+
+// Configure winston logger
+const logger = winston.createLogger({
+    level: 'debug', // Set the default log level
+    format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.printf(({ timestamp, level, message }) => {
+            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+        })
+    ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'logs/application.log' })
+    ]
+});
 
 // Initialize Coinbase SDK
 let coinbase;
@@ -13,9 +29,9 @@ let coinbase;
         coinbase = await Coinbase.configureFromJson({ 
             filePath: './secrets/cdp_api_key.json' // Update with your API key file path
         });
-        console.log('Coinbase SDK initialized successfully');
+        logger.info('Coinbase SDK initialized successfully');
     } catch (error) {
-        console.error('Failed to initialize Coinbase SDK:', error);
+        logger.error('Failed to initialize Coinbase SDK:', error);
     }
 })();
 
@@ -34,6 +50,7 @@ const rehydrateWallet = async (user, walletId) => {
 
 // Create a Wallet
 app.post('/create-wallet', async (req, res) => {
+    logger.debug('POST /create-wallet called');
     try {
         const user = await coinbase.getDefaultUser();
         const wallet = await user.createWallet();
@@ -45,111 +62,133 @@ app.post('/create-wallet', async (req, res) => {
         const directoryPath = path.dirname(filePath);
         if (!fs.existsSync(directoryPath)) {
             fs.mkdirSync(directoryPath, { recursive: true });
+            logger.info(`Directory created: ${directoryPath}`);
         }
 
         await wallet.saveSeed(filePath, true); // true for encryption
+        logger.info(`Wallet created and seed saved: ${wallet.getId()}`);
 
         res.json({ message: 'Wallet created and seed saved successfully', walletId: wallet.getId() });
     } catch (error) {
-        console.error('Error creating wallet:', error);
+        logger.error('Error creating wallet:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Fund a Wallet with testnet ETH
 app.post('/fund-wallet', async (req, res) => {
+    logger.debug('POST /fund-wallet called');
     try {
         const { walletId } = req.body;
-        console.log('walletId:', walletId);
+        logger.debug(`walletId: ${walletId}`);
         let user = await coinbase.getDefaultUser();
-        console.log('user:', user);
-        
+        logger.debug('User retrieved');
+
         // Rehydrate the wallet
         const wallet = await rehydrateWallet(user, walletId);
-        console.log('wallet:', wallet);
-        console.log(`wallet is hydrated: ${wallet.canSign()}`);
+        logger.debug('Wallet rehydrated');
+        logger.debug(`Wallet is hydrated: ${wallet.canSign()}`);
 
         const faucetTransaction = await wallet.faucet();
-        console.log('faucetTransaction:', faucetTransaction);
+        logger.info('Faucet transaction completed', faucetTransaction);
         res.json({ message: 'Faucet transaction completed', transaction: faucetTransaction });
     } catch (error) {
-        console.error('Error funding wallet:', error);
+        logger.error('Error funding wallet:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Transfer Funds
 app.post('/transfer-funds', async (req, res) => {
+    logger.debug('POST /transfer-funds called');
     try {
         const { sourceWalletId, destinationWalletAddress, amount } = req.body;
+        logger.debug(`sourceWalletId: ${sourceWalletId}, destinationWalletAddress: ${destinationWalletAddress}, amount: ${amount}`);
         let user = await coinbase.getDefaultUser();
-        
+        logger.debug('User retrieved');
+
         // Rehydrate the wallet
         const sourceWallet = await rehydrateWallet(user, sourceWalletId);
-        console.log(`wallet is hydrated: ${sourceWallet.canSign()}`);
+        logger.debug('Wallet rehydrated');
+        logger.debug(`Wallet is hydrated: ${sourceWallet.canSign()}`);
 
         const transfer = await sourceWallet.createTransfer({
             amount,
             assetId: Coinbase.assets.Eth,
             destination: destinationWalletAddress,
         });
+        logger.info('Transfer completed successfully', transfer);
         res.json({ message: 'Transfer completed successfully', transfer });
     } catch (error) {
-        console.error('Error transferring funds:', error);
+        logger.error('Error transferring funds:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Trade Assets
 app.post('/trade-assets', async (req, res) => {
+    logger.debug('POST /trade-assets called');
     try {
         const { walletId, fromAssetId, toAssetId, amount } = req.body;
+        logger.debug(`walletId: ${walletId}, fromAssetId: ${fromAssetId}, toAssetId: ${toAssetId}, amount: ${amount}`);
         const user = await coinbase.getDefaultUser();
-        
+        logger.debug('User retrieved');
+
         // Rehydrate the wallet
         const wallet = await rehydrateWallet(user, walletId);
-        console.log(`wallet is hydrated: ${wallet.canSign()}`);
+        logger.debug('Wallet rehydrated');
+        logger.debug(`Wallet is hydrated: ${wallet.canSign()}`);
 
         const trade = await wallet.createTrade({ 
             amount, 
             fromAssetId, 
             toAssetId 
         });
+        logger.info('Trade completed successfully', trade);
         res.json({ message: 'Trade completed successfully', trade });
     } catch (error) {
-        console.error('Error trading assets:', error);
+        logger.error('Error trading assets:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Get ETH Balance
 app.get('/wallet-balance/:walletId', async (req, res) => {
+    logger.debug('GET /wallet-balance/:walletId called');
     try {
         const { walletId } = req.params;
+        logger.debug(`walletId: ${walletId}`);
         let user = await coinbase.getDefaultUser();
+        logger.debug('User retrieved');
 
         // Rehydrate the wallet
         const wallet = await rehydrateWallet(user, walletId);
+        logger.debug('Wallet rehydrated');
 
         // Get the balance of ETH
         const balance = await wallet.getBalance(Coinbase.assets.Eth);
-
+        logger.info('ETH balance retrieved successfully', balance);
         res.json({ message: 'ETH balance retrieved successfully', balance });
     } catch (error) {
-        console.error('Error retrieving wallet balance:', error);
+        logger.error('Error retrieving wallet balance:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Get a Wallet
 app.get('/get-wallet/:walletId', async (req, res) => {
+    logger.debug('GET /get-wallet/:walletId called');
     try {
         const { walletId } = req.params;
+        logger.debug(`walletId: ${walletId}`);
         let user = await coinbase.getDefaultUser();
+        logger.debug('User retrieved');
+
         const wallet = await user.getWallet(walletId);
+        logger.info('Wallet retrieved successfully', wallet);
         res.json({ message: 'Wallet retrieved successfully', wallet });
     } catch (error) {
-        console.error('Error retrieving wallet:', error);
+        logger.error('Error retrieving wallet:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -158,7 +197,7 @@ app.get('/get-wallet/:walletId', async (req, res) => {
 const startServer = () => {
     const PORT = process.env.PORT || 3000;
     return app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        logger.info(`Server is running on port ${PORT}`);
     });
 };
 

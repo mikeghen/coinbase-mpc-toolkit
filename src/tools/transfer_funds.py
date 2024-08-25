@@ -49,7 +49,7 @@ class TransferFundsTool(BaseTool):
 if __name__ == "__main__":
     tool = TransferFundsTool()
     result = tool._run(
-        source_wallet_id="your_source_wallet_id_here",
+        source_wallet_id="674069f0-3de9-40bf-a06b-22a9573c7861",
         destination_wallet_address="0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895",
         amount="0.0001"
     )
