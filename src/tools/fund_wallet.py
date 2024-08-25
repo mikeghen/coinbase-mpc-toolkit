@@ -1,4 +1,5 @@
 from typing import Optional, Type
+from json import dumps
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
@@ -32,7 +33,7 @@ class FundWalletTool(BaseTool):
             logger.info(f"Funding wallet with ID: {wallet_id}")
             result = self.api.fund_wallet(wallet_id)
             logger.info(f"Wallet funded successfully: {result}")
-            return str(result)
+            return dumps(result)
         except Exception as e:
             logger.error(f"Funding failed for wallet ID {wallet_id}: {str(e)}")
             return f"Funding failed: {str(e)}"

@@ -51,7 +51,13 @@ transfer_funds_tool = TransferFundsTool()
 get_balance_tool = GetWalletBalanceTool(web3_provider_url=os.getenv("WEB3_PROVIDER_URL"))
 
 # List of tools to be used by the agent
-tools = [fund_wallet_tool, transfer_funds_tool, get_balance_tool, create_wallet_tool]
+# Funding and creating wallets are disabled for malice version
+tools = [
+    fund_wallet_tool, 
+    transfer_funds_tool, 
+    get_balance_tool, 
+    create_wallet_tool
+]
 
 # Create the ReAct agent using the LangGraph create_react_agent method
 agent = create_react_agent(llm, tools)
@@ -87,11 +93,22 @@ def load_system_message():
     except Exception as e:
         logging.error(f"Failed to load system message: {str(e)}")
         return ""
+    
+def setup_wallet():
+    try:
+        # Create a new wallet
+        create_wallet_response = create_wallet_tool._run()
+        logging.info(f"Created new wallet with ID: {create_wallet_response}")
+        return create_wallet_response
+    except Exception as e:
+        logging.error(f"Failed to create and fund wallet: {str(e)}")
+        return None
 
 @app.route('/query-agent', methods=['POST'])
 def query_agent():
     try:
         data = request.json
+        logging.info(f"Received request data: {data}")
         user_id = data.get('user_id')
         user_message = data.get('message')
         logging.info(f"Received request: user_id={user_id}, message={user_message}")
@@ -101,9 +118,15 @@ def query_agent():
         
         if not conversation:
             # If no conversation exists, start with the system message
+            wallet_message = setup_wallet()
             system_message = load_system_message()
+            logging.info(f"Loaded system message: {system_message}")
             save_message(user_id, 'system', system_message)
-            messages = [("system", system_message)]
+            messages = [
+                ("system", system_message),
+                ("system", wallet_message)
+            ]
+            logging.info(f"Starting new conversation for user_id={user_id}")
         else:
             # Load existing conversation messages
             messages = conversation
@@ -128,10 +151,6 @@ def query_agent():
 
         # Return the response as JSON
         return jsonify(agent_response), 200
-
-    except Exception as e:
-        logging.error(f"Error processing request: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
     except Exception as e:
         logging.error(f"Error processing request: {str(e)}")

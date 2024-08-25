@@ -1,4 +1,5 @@
 from typing import Optional, Type, Dict, Any
+from json import dumps
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
 from tools.coinbase_api import CoinbaseAPIWrapper
@@ -34,7 +35,7 @@ class CreateWalletTool(BaseTool):
                 "wallet_id": result["walletId"]
             }
             logger.info(f"Returning wallet information: {ret}")
-            return str(ret)
+            return dumps(ret)
         except Exception as e:
             logger.error(f"Failed to create wallet: {str(e)}")
             return {"error": f"Failed to create wallet: {str(e)}"}

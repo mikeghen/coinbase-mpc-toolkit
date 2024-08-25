@@ -25,45 +25,72 @@ tools = [fund_wallet_tool, transfer_funds_tool, get_balance_tool, create_wallet_
 # Create the ReAct agent using the LangGraph create_react_agent method
 agent = create_react_agent(llm, tools)
 
-# Example 1: Fund a wallet
-user_message = "I want to fund my wallet with testnet ETH."
+# # Example 1: Fund a wallet
+# user_message = "I want to fund my wallet with testnet ETH."
+# response = agent.invoke(
+#     {
+#         "messages": [
+#             ("system", "Create wallet with ID: 674069f0-3de9-40bf-a06b-22a9573c7861"), 
+#             ("human", user_message)
+#         ]
+#     }
+# )
+# print("# Demo 1: The agent funds a wallet by its")
+# print("-"*50)
+# print("## User Message: \n", user_message)
+# print("## Agent Response: \n", response["messages"][-1].content)
+# print("-"*50)
+
+# # Example 2: Transfer funds
+# user_message = "I want to transfer 0.0001 ETH to wallet 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895."
+# response = agent.invoke(
+#     {
+#         "messages": [
+#             ("system", "{\"message\": \"Wallet retrieved successfully\", \"address\": \"0xE9B0f8a530736313fdD388B0660163e93b298c77\",\"wallet_id\": \"674069f0-3de9-40bf-a06b-22a9573c7861\"}"),
+#             ("human", user_message)
+#         ]
+#     }
+# )
+# print("# Demo 2: The agent transfers funds between wallets.")
+# print("-"*50)
+# print("## User Message: \n", user_message)
+# print("## Agent Response: \n", response["messages"][-1].content)
+# print("-"*50) 
+
+
+# # Example 3: Get wallet balance
+# user_message = "What is the balance of my wallet with address 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895?"
+# response = agent.invoke({"messages": [("human", user_message)]})
+# print("# Demo 3: The agent retrieves the balance of a wallet.")
+# print("-"*50)
+# print("## User Message: \n", user_message)
+# print("## Agent Response: \n", response["messages"][-1].content)
+# print("-"*50)
+
+# # Example 4: Create a wallet
+# user_message = "I want to create a new wallet."
+# response = agent.invoke({"messages": [("human", user_message)]})
+# print("# Demo 4: The agent creates a new wallet.")
+# print("-"*50)
+# print("## User Message: \n", user_message)
+# print("## Agent Response: \n", response["messages"][-1].content)
+# print("-"*50)
+
+
+
+
+# Start a new conversation with the agent, set the system messages to be the response from the last tool calls
+# Load the file in prompts/malice_prompt.txt
+with open("prompts/malice_prompt.txt", "r") as file:
+    system_prompt = file.read()
 response = agent.invoke(
     {
         "messages": [
-            ("system", "Create wallet with ID: 674069f0-3de9-40bf-a06b-22a9573c7861"), 
-            ("human", user_message)
+            ("system", system_prompt),
+            ("system", wallet_creation_response),
+            ("system", fund_wallet_response),
+            ("human", "Hi")
         ]
     }
 )
-print("# Demo 1: The agent funds a wallet by its")
-print("-"*50)
-print("## User Message: \n", user_message)
-print("## Agent Response: \n", response["messages"][-1].content)
-print("-"*50)
-
-# Example 2: Transfer funds
-user_message = "I want to transfer 0.0001 ETH to wallet 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895."
-response = agent.invoke({"messages": [("human", user_message)]})
-print("# Demo 2: The agent transfers funds between wallets.")
-print("-"*50)
-print("## User Message: \n", user_message)
-print("## Agent Response: \n", response["messages"][-1].content)
-print("-"*50)
-
-# Example 3: Get wallet balance
-user_message = "What is the balance of my wallet with address 0xa7979BF6Ce644E4e36da2Ee65Db73c3f5A0dF895?"
-response = agent.invoke({"messages": [("human", user_message)]})
-print("# Demo 3: The agent retrieves the balance of a wallet.")
-print("-"*50)
-print("## User Message: \n", user_message)
-print("## Agent Response: \n", response["messages"][-1].content)
-print("-"*50)
-
-# Example 4: Create a wallet
-user_message = "I want to create a new wallet."
-response = agent.invoke({"messages": [("human", user_message)]})
-print("# Demo 4: The agent creates a new wallet.")
-print("-"*50)
-print("## User Message: \n", user_message)
-print("## Agent Response: \n", response["messages"][-1].content)
-print("-"*50)
+print("Agent response:", response["messages"][-1].content)

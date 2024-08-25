@@ -1,4 +1,5 @@
 from typing import Optional, Type
+from json import dumps
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
@@ -39,7 +40,7 @@ class TransferFundsTool(BaseTool):
             # Remove some unneeded text from the result before returning it
             del result["transfer"]["model"]["transaction"]["unsigned_payload"]
             del result["transfer"]["model"]["unsigned_payload"]
-            return str(result)
+            return dumps(result)
         except Exception as e:
             logger.error(f"Transfer failed from wallet {source_wallet_id} to {destination_wallet_address}: {str(e)}")
             return f"Transfer failed: {str(e)}"
