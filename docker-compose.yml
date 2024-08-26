@@ -25,6 +25,7 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - ./cdp/wallet_seeds:/app/wallet_seeds
       - /app/node_modules
     environment:
       - NODE_ENV=developement
