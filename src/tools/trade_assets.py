@@ -2,7 +2,7 @@ from typing import Optional, Type
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from tools.coinbase_api import CoinbaseAPIWrapper  
+from coinbase_sdk.api import CoinbaseAPIWrapper  
 
 class TradeAssetsInput(BaseModel):
     amount: str = Field(description="The amount of the asset/token to trade (as a string, e.g., '0.1')")

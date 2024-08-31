@@ -2,7 +2,7 @@ from typing import Optional, Type, Dict, Any
 from json import dumps
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from tools.coinbase_api import CoinbaseAPIWrapper
+from coinbase_sdk.api import CoinbaseAPIWrapper
 import logging
 
 logging.basicConfig(level=logging.INFO)

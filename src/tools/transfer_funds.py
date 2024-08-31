@@ -3,7 +3,7 @@ from json import dumps
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
-from tools.coinbase_api import CoinbaseAPIWrapper  # Import our API wrapper
+from coinbase_sdk.api import CoinbaseAPIWrapper  # Import our API wrapper
 import logging
 
 logging.basicConfig(level=logging.INFO)

@@ -17,13 +17,13 @@ conn.autocommit = True
 
 cursor = conn.cursor()
 cursor.execute('''
-    CREATE TABLE IF NOT EXISTS chat_history (
+    CREATE TABLE IF NOT EXISTS user_wallet (
         id SERIAL PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        message TEXT NOT NULL,
-        timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    )
+        user_id VARCHAR(255) NOT NULL UNIQUE,
+        wallet_id VARCHAR(255) NOT NULL,
+        wallet_address VARCHAR(255) NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 ''')
 cursor.close()
 conn.close()
