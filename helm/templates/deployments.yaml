@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-malice-app
+spec:
+  replicas: {{ .Values.malice.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-malice-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-malice-app
+    spec:
+      containers:
+      - name: malice-app
+        image: "{{ .Values.malice.app.image.repository }}:{{ .Values.malice.app.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.malice.app.port }}
+        env:
+        - name: NODE_ENV
+          value: development
+        - name: VITE_API_BASE_URL
+          value: http://{{ .Release.Name }}-malice-src:{{ .Values.malice.flaskApp.port }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-malice-cdp
+spec:
+  replicas: {{ .Values.malice.cdp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-malice-cdp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-malice-cdp
+    spec:
+      containers:
+      - name: malice-cdp
+        image: "{{ .Values.malice.cdp.image.repository }}:{{ .Values.malice.cdp.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.malice.cdp.port }}
+        env:
+        - name: NODE_ENV
+          value: development
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-malice-src
+spec:
+  replicas: {{ .Values.malice.flaskApp.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-malice-src
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-malice-src
+    spec:
+      containers:
+      - name: malice-src
+        image: "{{ .Values.malice.flaskApp.image.repository }}:{{ .Values.malice.flaskApp.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.malice.flaskApp.port }}
+        env:
+        - name: COINBASE_API_URL
+          value: http://{{ .Release.Name }}-malice-cdp:{{ .Values.malice.cdp.port }}
+        - name: FLASK_ENV
+          value: development
+        - name: FLASK_DEBUG
+          value: "true"
+        - name: FLASK_APP
+          value: server.py
+        - name: DB_NAME
+          value: {{ .Values.postgres.database }}
+        - name: DB_USER
+          value: {{ .Values.postgres.user }}
+        - name: DB_PASSWORD
+          value: {{ .Values.postgres.password }}
+        - name: DB_HOST
+          value: {{ .Release.Name }}-postgres
+        - name: DB_PORT
+          value: "5432"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-postgres
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.database }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgres.user }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgres.password }}
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-postgres-pvc

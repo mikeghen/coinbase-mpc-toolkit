@@ -1,0 +1,33 @@
+malice:
+  app:
+    replicaCount: 1
+    image:
+      repository: registry.digitalocean.com/malice/app
+      tag: latest
+    port: 8080
+
+  cdp:
+    replicaCount: 1
+    image:
+      repository: registry.digitalocean.com/malice/cdp
+      tag: latest
+    port: 3000
+
+  flaskApp:
+    replicaCount: 1
+    image:
+      repository: registry.digitalocean.com/malice/src
+      tag: latest
+    port: 5000
+
+postgres:
+  image:
+    repository: postgres
+    tag: "13"
+  database: chatbot
+  user: postgres
+  password: postgres
+
+ingress:
+  enabled: false
+  host: app.donottalktomalice.org

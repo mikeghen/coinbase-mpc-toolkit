@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-malice-app
+spec:
+  selector:
+    app: {{ .Release.Name }}-malice-app
+  ports:
+    - protocol: TCP
+      port: {{ .Values.malice.app.port }}
+      targetPort: {{ .Values.malice.app.port }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-malice-cdp
+spec:
+  selector:
+    app: {{ .Release.Name }}-malice-cdp
+  ports:
+    - protocol: TCP
+      port: {{ .Values.malice.cdp.port }}
+      targetPort: {{ .Values.malice.cdp.port }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-malice-flask-app
+spec:
+  selector:
+    app: {{ .Release.Name }}-malice-flask-app
+  ports:
+    - protocol: TCP
+      port: {{ .Values.malice.flaskApp.port }}
+      targetPort: {{ .Values.malice.flaskApp.port }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-postgres
+spec:
+  selector:
+    app: {{ .Release.Name }}-postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
