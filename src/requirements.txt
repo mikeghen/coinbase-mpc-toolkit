@@ -26,7 +26,5 @@ web3
 # Environment variables
 python-dotenv
 
-# JWT
-pyjwt[crypto]
-cryptography
-coinbase-advanced-py
+# Coinbase CDP API Related
+python-jose[cryptography]
