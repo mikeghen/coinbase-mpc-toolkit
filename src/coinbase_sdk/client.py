@@ -1,10 +1,11 @@
 import json
 import time
-import jwt
 import requests
 import os
 import logging
 from typing import Dict, Any
+import secrets
+from coinbase import jwt_generator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,25 +46,32 @@ class CoinbaseClient:
             logger.error("API key file is not valid JSON")
             raise ValueError("API key file is not valid JSON")
 
-    def _generate_jwt(self) -> str:
+    def _generate_jwt(self, method: str, uri: str) -> str:
         logger.info("Generating JWT token")
-        now = int(time.time())
-        payload = {
-            "iss": self.api_key_data["name"],
-            "sub": self.api_key_data["name"],
-            "iat": now,
-            "exp": now + 600  # Token expires in 10 minutes
-        }
-        token = jwt.encode(payload, self.api_key_data["privateKey"], algorithm="ES256")
+        api_key = self.api_key_data["name"]
+        api_secret = self.api_key_data["privateKey"]
+        logger.info(f"API key: {api_key}")
+        logger.info(f"API secret: {api_secret}")
+        
+        jwt_uri = jwt_generator.format_jwt_uri(method, uri)
+        jwt_token = jwt_generator.build_rest_jwt(jwt_uri, api_key, api_secret)
+        
         logger.info("JWT token generated successfully")
-        return token
+        return jwt_token
 
     def _request(self, method: str, endpoint: str, params: Dict[str, Any] = None, data: Dict[str, Any] = None) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
         logger.info(f"Making {method} request to {url}")
+        jwt_token = self._generate_jwt(method, endpoint)
         headers = {
-            "Authorization": f"Bearer {self._generate_jwt()}"
+            "Authorization": f"Bearer {jwt_token}",
+            "Accept": "application/json"
         }
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Params: {params}")
+        logger.info(f"Data: {data}")
+        logger.info(f"Method: {method}")
+        logger.info(f"URL: {url}")
         response = self.session.request(method, url, headers=headers, params=params, json=data)
         logger.info(f"Response status code: {response.status_code}")
         response.raise_for_status()
@@ -75,22 +83,30 @@ class CoinbaseClient:
 
         logger.info(f"Making CDP {method} request to {endpoint}")
         conn = http.client.HTTPSConnection("api.cdp.coinbase.com")
+        jwt_token = self._generate_jwt(method, endpoint)
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Authorization': f"Bearer {self._generate_jwt()}"
+            'Authorization': f"Bearer {jwt_token}"
         }
         conn.request(method, endpoint, payload, headers)
         res = conn.getresponse()
         logger.info(f"CDP Response status: {res.status}")
         data = res.read()
+        logger.info(f"CDP Response data: {data}")
         response_data = json.loads(data.decode("utf-8"))
         logger.info("CDP Request successful")
         return response_data
 
     def create_wallet(self) -> Dict[str, Any]:
         logger.info("Creating new wallet")
-        response = self._cdp_request("POST", "/platform/v1/wallets")
+        payload = json.dumps({
+            "wallet": {
+                "network_id": "1",
+                "use_server_signer": False
+            }
+        })
+        response = self._cdp_request("POST", "/platform/v1/wallets", payload)
         logger.info(f"Wallet creation response: {response}")
         if not isinstance(response, dict):
             logger.error("Invalid response format; expected a dictionary.")
