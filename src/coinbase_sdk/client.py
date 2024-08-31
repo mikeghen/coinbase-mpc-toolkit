@@ -4,14 +4,13 @@ import requests
 import os
 import logging
 from typing import Dict, Any
-import secrets
 from coinbase import jwt_generator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class CoinbaseClient:
-    def __init__(self, api_key_file: str = None, base_url: str = "https://api.coinbase.com"):
+    def __init__(self, api_key_file: str = None, base_url: str = "https://api.cdp.coinbase.com"):
         logger.info(f"Initializing CoinbaseClient with base_url: {base_url}")
         self.base_url = base_url
         self.api_key_data = self._load_api_key(api_key_file)
@@ -82,7 +81,7 @@ class CoinbaseClient:
         import http.client
 
         logger.info(f"Making CDP {method} request to {endpoint}")
-        conn = http.client.HTTPSConnection("api.cdp.coinbase.com")
+        conn = http.client.HTTPSConnection(self.base_url.replace("https://", ""))
         jwt_token = self._generate_jwt(method, endpoint)
         headers = {
             'Content-Type': 'application/json',
