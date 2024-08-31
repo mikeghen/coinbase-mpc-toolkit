@@ -21,7 +21,7 @@ spec:
         - name: NODE_ENV
           value: development
         - name: VITE_API_BASE_URL
-          value: http://{{ .Release.Name }}-malice-src:{{ .Values.malice.flaskApp.port }}
+          value: https://api.donottalktomalice.org
 
 ---
 
@@ -79,48 +79,12 @@ spec:
         - name: FLASK_APP
           value: server.py
         - name: DB_NAME
-          value: {{ .Values.postgres.database }}
+          value: {{ .Values.malice.db.name }}
         - name: DB_USER
-          value: {{ .Values.postgres.user }}
+          value: {{ .Values.malice.db.user }}
         - name: DB_PASSWORD
-          value: {{ .Values.postgres.password }}
+          value: {{ .Values.malice.db.password }}
         - name: DB_HOST
-          value: {{ .Release.Name }}-postgres
+          value: {{ .Values.malice.db.host }}
         - name: DB_PORT
-          value: "5432"
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ .Release.Name }}-postgres
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: {{ .Release.Name }}-postgres
-  template:
-    metadata:
-      labels:
-        app: {{ .Release.Name }}-postgres
-    spec:
-      containers:
-      - name: postgres
-        image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_DB
-          value: {{ .Values.postgres.database }}
-        - name: POSTGRES_USER
-          value: {{ .Values.postgres.user }}
-        - name: POSTGRES_PASSWORD
-          value: {{ .Values.postgres.password }}
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-      volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-postgres-pvc
+          value: {{ .Values.malice.db.port }}

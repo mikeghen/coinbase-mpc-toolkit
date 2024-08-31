@@ -5,6 +5,9 @@ malice:
       repository: registry.digitalocean.com/malice/app
       tag: latest
     port: 8080
+    loadBalancer:
+      certificateId: "c97aa2ae-8e8b-4a08-9a48-9c15a2561f98"
+      hostname: "app.donottalktomalice.org"
 
   cdp:
     replicaCount: 1
@@ -19,15 +22,23 @@ malice:
       repository: registry.digitalocean.com/malice/src
       tag: latest
     port: 5000
+    loadBalancer:
+      certificateId: "166f9b09-b888-4d49-9e1a-50f4dd13df81"
+      hostname: "api.donottalktomalice.org"
 
-postgres:
-  image:
-    repository: postgres
-    tag: "13"
-  database: chatbot
-  user: postgres
-  password: postgres
+  db:
+    name: chatbot
+    user: malice
+    password: "malice"
+    host: "malice"
+    port: "5432"
 
-ingress:
-  enabled: false
-  host: app.donottalktomalice.org
+
+loadBalancer:
+  id: ""
+  sizeUnit: "1"
+  disableLetsEncryptDNSRecords: "false"
+  protocol: "https"  
+  hostname: "app.donottalktomalice.org" 
+  redirectHttpToHttps: "true" 
+  enableTLS: true 

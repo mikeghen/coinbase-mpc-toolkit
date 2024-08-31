@@ -21,7 +21,7 @@ load_dotenv()
 
 # Initialize the Flask application
 app = Flask(__name__)
-CORS(app)  # Enable CORS for cross-origin requests
+CORS(app, resources={r"/query-agent": {"origins": "https://app.donottalktomalice.org"}})  # Enable CORS for specific origins
 
 # Configure the SQLAlchemy part of the application
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"

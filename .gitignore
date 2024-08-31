@@ -6,3 +6,4 @@ wallet_seeds
 chat_history.db
 cdp/secrets/*
 !cdp/secrets/.gitkeep
+*/values.local.yaml
