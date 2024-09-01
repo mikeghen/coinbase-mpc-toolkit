@@ -87,4 +87,4 @@ spec:
         - name: DB_HOST
           value: {{ .Values.malice.db.host }}
         - name: DB_PORT
-          value: {{ .Values.malice.db.port }}
+          value: "{{ .Values.malice.db.port }}"
